@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Pie layout</title>
+		<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+		<style type="text/css">
+
+			text {
+				font-family: sans-serif;
+				font-size: 12px;
+				fill: black;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+var width = 960,
+    height = 500,
+    radius = Math.min(width, height) / 2;
+var formatconv = d3.format(".2%");
+
+var color = d3.scale.linear()
+                    .rangeRound([0,510])
+					.clamp(true)
+					;
+
+var arc = d3.svg.arc()
+    .outerRadius(radius - 10)
+    .innerRadius(0);
+		
+var pie = d3.layout.pie()
+    .sort(null)
+    .value(function(d) { return 1; });
+		
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+			//Width and height
+			var dataset = d3.json("php/php_rtr_hour.php", function(error, data) {
+var dataset = data.forEach(function(d) {
+	d.hour = d.HOUR_SUBMITTED;
+	d.quotes = +d.QUOTES;
+	d.sales = +d.SALES
+});
+
+
+var max_quotes = d3.max(data, function(d) {return d.quotes;});
+
+color.domain([d3.min(data, function(d) { if (d.quotes >= max_quotes/10) {return d.sales/d.quotes} else {return 100;}}),d3.max(data, function(d) { if (d.quotes >= max_quotes/10) {return d.sales/d.quotes} else {return 0;}})]);
+
+  var g = svg.selectAll(".arc")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc");
+
+	  g.append("path")
+      .attr("d", (d3.svg.arc()
+    .outerRadius(function(d) {return (radius - 10)*(d.data.quotes/max_quotes);})
+    .innerRadius(0)))
+      .style("fill", function(d) { var value = color(d.data.sales/d.data.quotes);
+	  if (value >= 0 && value < 255) {return "rgb(255," + value + ",0)";}
+		else if (value >= 255) {return "rgb(" + (510 - value) + ",255,0)";} 
+		else {return "rbg(0,0,255)"}});
+	  /*
+  g.append("text")
+      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .text(function(d) { return d.data.hour; });*/
+	  
+  g.append("text")
+      .attr("transform", function(d) { return "translate(" + (arc.centroid(d)) + ")"; })
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .text(function(d) { return d.data.hour; });
+
+});
+
+
+						
+		</script>
+	</body>
+</html>
